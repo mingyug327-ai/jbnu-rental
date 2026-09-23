@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>물품 대여 시스템</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header-left h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header-left p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .admin-badge {
+            background: rgba(255,255,255,0.3);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .admin-badge.hidden {
+            display: none;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .logout-btn.hidden {
+            display: none;
+        }
+        
+        .login-modal {
+            display: flex;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-modal.hidden {
+            display: none;
+        }
+        
+        .login-content {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .login-content h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        
+        .login-content p {
+            color: #999;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .login-form input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .login-form input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .login-form button {
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .login-form button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .login-error {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .login-error.show {
+            display: block;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #eee;
+            padding: 0 30px;
+            background: #f8f9fa;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+            background: white;
+        }
+        
+        .tab.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            color: #999;
+        }
+        
+        .tab.locked:hover {
+            background: transparent;
+        }
+        
+        .lock-icon {
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .item-card {
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s;
+            background: #f9f9f9;
+        }
+        
+        .item-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.1);
+        }
+        
+        .item-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .item-icon {
+            font-size: 40px;
+            margin-right: 10px;
+        }
+        
+        .item-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 5px;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-value.warning {
+            color: #ff6b6b;
+        }
+        
+        .status-bar {
+            background: #eee;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .status-fill {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            transition: width 0.3s;
+        }
+        
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+            border: 1px solid #ddd;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .btn-danger {
+            background: #ff6b6b;
+            color: white;
+            width: auto;
+        }
+        
+        .btn-danger:hover {
+            background: #ff5252;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .rental-form {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .rental-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .rental-item {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .rental-info {
+            flex: 1;
+        }
+        
+        .rental-item-name {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .rental-item-date {
+            font-size: 12px;
+            color: #999;
+            line-height: 1.6;
+        }
+        
+        .rental-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+        
+        .status-renting {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .status-returned {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .summary-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .summary-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+        
+        .summary-value {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-message-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+        }
+        
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .restricted-notice {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #ffc107;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .sync-notice {
+            margin: 0 30px 20px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            background: #fff3cd;
+            color: #856404;
+            font-size: 13px;
+            display: none;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    
+        .firebase-status {
+            display:inline-flex; align-items:center; gap:6px;
+            margin-left:8px; padding:4px 9px; border-radius:999px;
+            font-size:12px; font-weight:700; vertical-align:middle;
+            background:#f1f3f5; color:#666;
+        }
+        .firebase-status.connected { background:#e8f7ee; color:#16733b; }
+        .firebase-status.offline { background:#fff3cd; color:#8a6d00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>📦 학생회 물품 대여 <span id="firebaseStatus" class="firebase-status offline">연결 확인 중</span></h1>
+                <p>학생회 물품을 효율적으로 관리하세요</p>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <div class="admin-badge hidden" id="adminBadge">
+                    <span>👤</span> 관리자 모드
+                </div>
+                <button class="logout-btn hidden" id="logoutBtn" onclick="logout()">로그아웃</button>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('dashboard', this)">대시보드</button>
+            <button class="tab" onclick="switchTab('rental', this)">물품 대여</button>
+            <button class="tab" onclick="switchTab('mySearch', this)">내 대여 조회</button>
+            <button class="tab locked" id="historyTab" onclick="tryAccessHistory()">
+                <span class="lock-icon">🔒</span> 대여 이력
+            </button>
+            <button class="tab locked" id="manageTab" onclick="tryAccessManage()">
+                <span class="lock-icon">🔒</span> 물품 관리
+            </button>
+        </div>
+        
+        <div class="sync-notice" id="syncNotice">
+            🔄 Firebase 연결 상태를 확인하는 중입니다. 연결되면 여러 브라우저에서 동일한 데이터가 표시됩니다.
+        </div>
+
+        <div class="content">
+            <!-- 대시보드 탭 -->
+            <div id="dashboard" class="tab-content active">
+                <div class="stats-summary" id="statsSummary"></div>
+                <h2 style="margin-bottom: 20px; color: #333;">📊 물품 현황</h2>
+                <div class="items-grid" id="dashboardItems"></div>
+            </div>
+            
+            <!-- 물품 대여 탭 -->
+            <div id="rental" class="tab-content">
+                <div id="rentalSuccess" class="success-message" style="display: none;"></div>
+                <div class="rental-form">
+                    <h3 style="margin-bottom: 20px; color: #333;">새로운 대여 신청</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>이름 *</label>
+                            <input type="text" id="renterName" placeholder="이름을 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label>학번 *</label>
+                            <input type="text" id="renterStudentId" placeholder="예: 2024-12345">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>전화번호 *</label>
+                        <input type="tel" id="renterPhone" placeholder="010-0000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label>대여 물품 선택 *</label>
+                        <select id="itemSelect" onchange="updateAvailableCount()">
+                            <option value="">물품을 선택하세요</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>대여 수량</label>
+                        <input type="number" id="rentalQuantity" min="1" value="1">
+                        <small style="color: #999; margin-top: 5px; display: block;" id="availableCount"></small>
+                    </div>
+                    <div class="form-group">
+                        <label>대여 기한 (일)</label>
+                        <input type="number" id="rentalDays" min="1" value="1">
+                    </div>
+                    <button class="btn btn-primary" onclick="submitRental()">대여 신청하기</button>
+                </div>
+            </div>
+
+            <!-- 내 대여 조회 탭 -->
+            <div id="mySearch" class="tab-content">
+                <div class="rental-form">
+                    <h3 style="margin-bottom: 20px; color: #333;">🔍 내 대여 내역 확인</h3>
+                    <p style="color: #666; font-size: 14px; margin-bottom: 15px;">학번과 이름을 입력하면 본인이 대여 중이거나 빌렸던 내역을 확인할 수 있습니다.</p>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>이름</label>
+                            <input type="text" id="searchName" placeholder="이름 입력">
+                        </div>
+                        <div class="form-group">
+                            <label>학번</label>
+                            <input type="text" id="searchStudentId" placeholder="학번 입력 (예: 2024-12345)">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="searchMyRentals()">내 내역 조회하기</button>
+                </div>
+                <div id="mySearchResultContainer" style="display: none;">
+                    <h3 style="margin-bottom: 15px; color: #333;" id="mySearchTitle">조회 결과</h3>
+                    <div id="mySearchList" class="rental-list"></div>
+                </div>
+                <div id="mySearchEmpty" class="empty-message" style="display: none;">
+                    <div class="empty-message-icon">🔍</div>
+                    <p>일치하는 대여 내역이 없습니다.</p>
+                </div>
+            </div>
+            
+            <!-- 대여 이력 탭 -->
+            <div id="history" class="tab-content">
+                <div class="restricted-notice" id="historyRestrictedNotice" style="display: none;">
+                    🔒 관리자만 접근 가능합니다
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3 style="color: #333;" id="historyTitle">📅 대여 이력</h3>
+                    <button class="btn btn-secondary" id="clearReturnedBtn" onclick="clearReturnedRentals()" style="display: none; font-size: 13px; padding: 6px 12px;">🧹 반납된 내역 전체 삭제</button>
+                </div>
+                <div id="rentalHistory" class="rental-list"></div>
+                <div id="emptyHistory" class="empty-message" style="display: none;">
+                    <div class="empty-message-icon">📭</div>
+                    <p>아직 대여 이력이 없습니다.</p>
+                </div>
+            </div>
+            
+            <!-- 물품 관리 탭 -->
+            <div id="manage" class="tab-content">
+                <div class="restricted-notice" id="restrictedNotice" style="display: none;">
+                    🔒 관리자만 접근 가능합니다
+                </div>
+                <div class="rental-form" id="manageForm" style="display: none;">
+                    <h3 style="margin-bottom: 20px; color: #333;">새로운 물품 추가</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>물품명</label>
+                            <input type="text" id="newItemName" placeholder="물품명을 입력하세요">
+                        </div>
+                        <div class="form-group">
+                            <label>이모지 (아이콘)</label>
+                            <input type="text" id="newItemEmoji" placeholder="예: 📖 ⚽ 🎮" maxlength="2" value="📦">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>총 수량</label>
+                        <input type="number" id="newItemQuantity" min="1" value="5">
+                    </div>
+                    <button class="btn btn-primary" onclick="addNewItem()">물품 추가</button>
+                </div>
+                
+                <h3 style="margin-top: 30px; margin-bottom: 20px; color: #333;" id="manageListTitle">📋 물품 목록</h3>
+                <div id="managedItems" class="rental-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 초기 선택 화면 (관리자/학생) -->
+    <div class="login-modal" id="selectModal">
+        <div class="login-content">
+            <h2>👋 환영합니다!</h2>
+            <p>당신은 누구신가요?</p>
+            <div class="login-form" style="gap: 25px;">
+                <button onclick="selectStudent()" style="background: linear-gradient(135deg, #51cf66 0%, #37b24d 100%); padding: 15px; font-size: 16px;">
+                    👨‍🎓 학생 (물품 대여 및 조회)
+                </button>
+                <button onclick="showAdminLogin()" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 15px; font-size: 16px;">
+                    👤 관리자 (물품 관리)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리자 로그인 모달 -->
+    <div class="login-modal hidden" id="loginModal">
+        <div class="login-content">
+            <h2>관리자 로그인</h2>
+            <p>보안을 위해 비밀번호를 입력하세요</p>
+            <div class="login-form">
+                <input type="password" id="adminPassword" placeholder="관리자 비밀번호" onkeypress="if(event.key==='Enter') adminLogin()">
+                <button onclick="adminLogin()">로그인</button>
+                <button onclick="backToSelect()" style="background: #999; margin-top: 10px;">돌아가기</button>
+                <div class="login-error" id="loginError">❌ 비밀번호가 틀렸습니다</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 반납 모달 -->
+    <div id="returnModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">대여 반납</div>
+            <p style="margin-bottom: 20px; color: #666;" id="returnItemInfo"></p>
+            <div class="form-group">
+                <label>반납 수량</label>
+                <input type="number" id="returnQuantity" min="1" value="1">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="closeModal()">취소</button>
+                <button class="btn btn-primary" onclick="submitReturn()">반납하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnJid-yBfrEQQ-3WKtKokio5pYFbFVvNg",
+            authDomain: "jbnu-rental.firebaseapp.com",
+            databaseURL: "https://jbnu-rental-default-rtdb.firebaseio.com",
+            projectId: "jbnu-rental",
+            storageBucket: "jbnu-rental.firebasestorage.app",
+            messagingSenderId: "333458530415",
+            appId: "1:333458530415:web:bf6f5592aa279a6738ed9a"
+        };
+
+        const firebaseConfigured = Object.values(firebaseConfig)
+            .every(v => v && !String(v).startsWith("YOUR_"));
+
+        let sharedRef = null;
+        let suppressRemoteWrite = false;
+        let isFirebaseConnected = false;
+
+        if (firebaseConfigured) {
+            try {
+                const app = initializeApp(firebaseConfig);
+                const db = getDatabase(app);
+                sharedRef = ref(db, "student-council-rental");
+                isFirebaseConnected = true;
+
+                onValue(sharedRef, snapshot => {
+                    const data = snapshot.val();
+                    if (!data) {
+                        const initialItems = [
+                            { id: 1, name: '펜', emoji: '✏️', total: 20, renting: 3 },
+                            { id: 2, name: '축구공', emoji: '⚽', total: 5, renting: 4 },
+                            { id: 3, name: '우산', emoji: '☔', total: 10, renting: 3 },
+                            { id: 4, name: '스피커', emoji: '🔊', total: 2, renting: 1 },
+                            { id: 5, name: '라켓', emoji: '🎾', total: 8, renting: 2 }
+                        ];
+                        set(sharedRef, { items: initialItems, rentals: [], updatedAt: Date.now() });
+                        return;
+                    }
+
+                    suppressRemoteWrite = true;
+                    window.items = Array.isArray(data.items) ? data.items : [];
+                    window.rentals = Array.isArray(data.rentals) ? data.rentals : [];
+
+                    if (typeof window.renderDashboard === "function") window.renderDashboard();
+                    if (typeof window.renderRentalForm === "function") window.renderRentalForm();
+                    if (window.isAdmin) {
+                        if (typeof window.renderHistory === "function") window.renderHistory();
+                        if (typeof window.renderManageTab === "function") window.renderManageTab();
+                    }
+
+                    setTimeout(() => { suppressRemoteWrite = false; }, 0);
+                });
+            } catch (e) {
+                console.error("Firebase initialization failed:", e);
+                isFirebaseConnected = false;
+            }
+        }
+
+        const statusEl = document.getElementById("firebaseStatus");
+        if (statusEl) {
+            if (isFirebaseConnected) {
+                statusEl.textContent = "Firebase 연결됨";
+                statusEl.className = "firebase-status connected";
+            } else {
+                statusEl.textContent = "로컬 모드";
+                statusEl.className = "firebase-status offline";
+            }
+        }
+
+        window.__sharedStore = {
+            configured: () => firebaseConfigured && !!sharedRef,
+            save: async (itemsValue, rentalsValue) => {
+                if (!sharedRef || suppressRemoteWrite) return;
+                await set(sharedRef, {
+                    items: itemsValue,
+                    rentals: rentalsValue,
+                    updatedAt: Date.now()
+                });
+            }
+        };
+    </script>
+
+    <script>
+        var items = [];
+        var rentals = [];
+        let currentReturnIndex = null;
+        let isAdmin = false;
+        
+        const ADMIN_PASSWORD = '0075';
+        
+        function initializeData() {
+            try {
+                const savedAdmin = localStorage.getItem('isAdmin');
+                const userType = localStorage.getItem('userType');
+
+                if (!window.__sharedStore.configured()) {
+                    items = [
+                        { id: 1, name: '펜', emoji: '✏️', total: 20, renting: 3 },
+                        { id: 2, name: '축구공', emoji: '⚽', total: 5, renting: 4 },
+                        { id: 3, name: '우산', emoji: '☔', total: 10, renting: 3 },
+                        { id: 4, name: '스피커', emoji: '🔊', total: 2, renting: 1 },
+                        { id: 5, name: '라켓', emoji: '🎾', total: 8, renting: 2 }
+                    ];
+                    rentals = [];
+                }
+
+                isAdmin = savedAdmin === 'true';
+
+                if (!userType) {
+                    document.getElementById('selectModal').classList.remove('hidden');
+                } else {
+                    document.getElementById('selectModal').classList.add('hidden');
+                    updateAdminUI();
+                }
+            } catch (e) {
+                console.error('초기화 오류:', e);
+            }
+        }
+
+        function updateAdminUI() {
+            const adminBadge = document.getElementById('adminBadge');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const historyTab = document.getElementById('historyTab');
+            const manageTab = document.getElementById('manageTab');
+            
+            const historyRestrictedNotice = document.getElementById('historyRestrictedNotice');
+            const historyTitle = document.getElementById('historyTitle');
+            const rentalHistory = document.getElementById('rentalHistory');
+            const emptyHistory = document.getElementById('emptyHistory');
+            const clearReturnedBtn = document.getElementById('clearReturnedBtn');
+
+            const restrictedNotice = document.getElementById('restrictedNotice');
+            const manageForm = document.getElementById('manageForm');
+            const manageListTitle = document.getElementById('manageListTitle');
+            
+            if (isAdmin) {
+                adminBadge.classList.remove('hidden');
+                logoutBtn.classList.remove('hidden');
+                
+                historyTab.classList.remove('locked');
+                historyTab.style.cursor = 'pointer';
+                historyTab.style.opacity = '1';
+                historyRestrictedNotice.style.display = 'none';
+                historyTitle.style.display = 'block';
+                if(clearReturnedBtn) clearReturnedBtn.style.display = 'block';
+                
+                manageTab.classList.remove('locked');
+                manageTab.style.cursor = 'pointer';
+                manageTab.style.opacity = '1';
+                restrictedNotice.style.display = 'none';
+                manageForm.style.display = 'block';
+                manageListTitle.style.display = 'block';
+            } else {
+                adminBadge.classList.add('hidden');
+                logoutBtn.classList.add('hidden');
+                
+                historyTab.classList.add('locked');
+                historyTab.style.cursor = 'not-allowed';
+                historyTab.style.opacity = '0.5';
+                historyRestrictedNotice.style.display = 'block';
+                historyTitle.style.display = 'none';
+                rentalHistory.style.display = 'none';
+                emptyHistory.style.display = 'none';
+                if(clearReturnedBtn) clearReturnedBtn.style.display = 'none';
+                
+                manageTab.classList.add('locked');
+                manageTab.style.cursor = 'not-allowed';
+                manageTab.style.opacity = '0.5';
+                restrictedNotice.style.display = 'block';
+                manageForm.style.display = 'none';
+                manageListTitle.style.display = 'none';
+            }
+        }
+        
+        function selectStudent() {
+            isAdmin = false;
+            localStorage.setItem('isAdmin', 'false');
+            localStorage.setItem('userType', 'student');
+            document.getElementById('selectModal').classList.add('hidden');
+            updateAdminUI();
+            renderDashboard();
+        }
+        
+        function showAdminLogin() {
+            document.getElementById('selectModal').classList.add('hidden');
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.getElementById('adminPassword').focus();
+        }
+        
+        function backToSelect() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.getElementById('selectModal').classList.remove('hidden');
+            document.getElementById('adminPassword').value = '';
+            document.getElementById('loginError').classList.remove('show');
+        }
+        
+        function tryAccessHistory() {
+            if (!isAdmin) {
+                document.getElementById('loginModal').classList.remove('hidden');
+                document.getElementById('adminPassword').focus();
+            } else {
+                switchTab('history');
+                renderHistory();
+            }
+        }
+
+        function tryAccessManage() {
+            if (!isAdmin) {
+                document.getElementById('loginModal').classList.remove('hidden');
+                document.getElementById('adminPassword').focus();
+            } else {
+                switchTab('manage');
+                renderManageTab();
+            }
+        }
+        
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            const loginError = document.getElementById('loginError');
+            
+            if (password === ADMIN_PASSWORD) {
+                isAdmin = true;
+                localStorage.setItem('isAdmin', 'true');
+                updateAdminUI();
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('adminPassword').value = '';
+                loginError.classList.remove('show');
+                switchTab('dashboard');
+                renderDashboard();
+            } else {
+                loginError.classList.add('show');
+                document.getElementById('adminPassword').value = '';
+            }
+        }
+        
+        function logout() {
+            isAdmin = false;
+            localStorage.setItem('isAdmin', 'false');
+            localStorage.removeItem('userType');
+            document.getElementById('selectModal').classList.remove('hidden');
+            updateAdminUI();
+            switchTab('dashboard');
+        }
+        
+        async function saveData() {
+            if (window.__sharedStore && window.__sharedStore.configured()) {
+                try {
+                    await window.__sharedStore.save(items, rentals);
+                } catch (e) {
+                    console.error('공유 데이터 저장 실패:', e);
+                }
+            }
+        }
+        
+        function switchTab(tabName, clickedTab) {
+            if (tabName === 'history' && !isAdmin) {
+                tryAccessHistory();
+                return;
+            }
+            if (tabName === 'manage' && !isAdmin) {
+                tryAccessManage();
+                return;
+            }
+            
+            const contents = document.querySelectorAll('.tab-content');
+            const tabs = document.querySelectorAll('.tab');
+            
+            contents.forEach(content => content.classList.remove('active'));
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            
+            const activeTab = clickedTab || document.querySelector(`.tab[onclick*="switchTab('${tabName}'"]`);
+            if (activeTab) activeTab.classList.add('active');
+            
+            if (tabName === 'dashboard') {
+                renderDashboard();
+            } else if (tabName === 'history' && isAdmin) {
+                renderHistory();
+            } else if (tabName === 'rental') {
+                renderRentalForm();
+            } else if (tabName === 'manage' && isAdmin) {
+                renderManageTab();
+            }
+        }
+        
+        window.renderDashboard = function() {
+            const statsSummary = document.getElementById('statsSummary');
+            const dashboardItems = document.getElementById('dashboardItems');
+            
+            const totalItems = items.reduce((sum, item) => sum + item.total, 0);
+            const totalRenting = items.reduce((sum, item) => sum + item.renting, 0);
+            const totalAvailable = totalItems - totalRenting;
+            
+            statsSummary.innerHTML = `
+                <div class="summary-card">
+                    <div class="summary-label">전체 물품</div>
+                    <div class="summary-value">${totalItems}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">대여 중</div>
+                    <div class="summary-value">${totalRenting}</div>
+                </div>
+                <div class="summary-card">
+                    <div class="summary-label">사용 가능</div>
+                    <div class="summary-value">${totalAvailable}</div>
+                </div>
+            `;
+            
+            dashboardItems.innerHTML = items.map(item => {
+                const available = item.total - item.renting;
+                const percentage = item.total > 0 ? (item.renting / item.total) * 100 : 0;
+                
+                return `
+                    <div class="item-card">
+                        <div class="item-name">
+                            <span class="item-icon">${item.emoji}</span>${item.name}
+                        </div>
+                        <div class="status-bar">
+                            <div class="status-fill" style="width: ${percentage}%"></div>
+                        </div>
+                        <div class="item-stats">
+                            <div class="stat">
+                                <div class="stat-label">보유</div>
+                                <div class="stat-value">${item.total}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">대여중</div>
+                                <div class="stat-value ${item.renting > 0 ? 'warning' : ''}">${item.renting}</div>
+                            </div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: #f0f0f0; border-radius: 8px; color: #667eea; font-weight: bold;">
+                            사용가능: ${available}개
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        window.renderRentalForm = function() {
+            const itemSelect = document.getElementById('itemSelect');
+            if (!itemSelect) return;
+            itemSelect.innerHTML = '<option value="">물품을 선택하세요</option>' + 
+                items.map(item => `<option value="${item.id}">${item.emoji} ${item.name}</option>`).join('');
+        }
+        
+        function updateAvailableCount() {
+            const itemSelect = document.getElementById('itemSelect');
+            const availableCount = document.getElementById('availableCount');
+            const selectedId = parseInt(itemSelect.value);
+            
+            if (selectedId) {
+                const item = items.find(i => i.id === selectedId);
+                if (item) {
+                    const available = item.total - item.renting;
+                    availableCount.textContent = `사용 가능: ${available}개`;
+                }
+            } else {
+                availableCount.textContent = '';
+            }
+        }
+        
+        function submitRental() {
+            const renterName = document.getElementById('renterName').value.trim();
+            const renterStudentId = document.getElementById('renterStudentId').value.trim();
+            const renterPhone = document.getElementById('renterPhone').value.trim();
+            const itemId = parseInt(document.getElementById('itemSelect').value);
+            const quantity = parseInt(document.getElementById('rentalQuantity').value);
+            const days = parseInt(document.getElementById('rentalDays').value);
+            
+            if (!renterName || !renterStudentId || !renterPhone || !itemId || quantity < 1) {
+                alert('모든 정보를 입력해주세요 (필수 입력: 이름, 학번, 전화번호, 물품)');
+                return;
+            }
+            
+            const phoneRegex = /^010-?\d{4}-?\d{4}$/;
+            if (!phoneRegex.test(renterPhone.replace(/-/g, ''))) {
+                alert('올바른 전화번호 형식을 입력해주세요 (예: 010-0000-0000)');
+                return;
+            }
+            
+            const item = items.find(i => i.id === itemId);
+            const available = item.total - item.renting;
+            
+            if (quantity > available) {
+                alert(`사용 가능한 수량은 ${available}개입니다`);
+                return;
+            }
+            
+            item.renting += quantity;
+            
+            const rentalDate = new Date();
+            const returnDate = new Date(rentalDate.getTime() + days * 24 * 60 * 60 * 1000);
+            
+            rentals.push({
+                id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+                itemId: itemId,
+                itemName: item.name,
+                itemEmoji: item.emoji,
+                renterName: renterName,
+                renterStudentId: renterStudentId,
+                renterPhone: renterPhone,
+                quantity: quantity,
+                rentalDate: rentalDate.toISOString(),
+                returnDate: returnDate.toISOString(),
+                returned: false,
+                returnedDate: null
+            });
+            
+            saveData();
+            
+            document.getElementById('renterName').value = '';
+            document.getElementById('renterStudentId').value = '';
+            document.getElementById('renterPhone').value = '';
+            document.getElementById('itemSelect').value = '';
+            document.getElementById('rentalQuantity').value = '1';
+            document.getElementById('rentalDays').value = '1';
+            document.getElementById('availableCount').textContent = '';
+            
+            const successMsg = document.getElementById('rentalSuccess');
+            successMsg.textContent = `✓ ${renterName}님의 ${item.name} ${quantity}개 대여가 등록되었습니다!`;
+            successMsg.style.display = 'block';
+            
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 3000);
+            
+            renderDashboard();
+            if (isAdmin) renderHistory();
+        }
+
+        function searchMyRentals() {
+            const name = document.getElementById('searchName').value.trim();
+            const studentId = document.getElementById('searchStudentId').value.trim();
+            const resultContainer = document.getElementById('mySearchResultContainer');
+            const resultList = document.getElementById('mySearchList');
+            const emptyMsg = document.getElementById('mySearchEmpty');
+            const searchTitle = document.getElementById('mySearchTitle');
+
+            if (!name || !studentId) {
+                alert('이름과 학번을 모두 입력해주세요.');
+                return;
+            }
+
+            const matched = rentals.filter(r => r.renterName === name && r.renterStudentId === studentId);
+
+            searchTitle.textContent = `${name} (${studentId})님의 대여 내역 (${matched.length}건)`;
+
+            if (matched.length === 0) {
+                resultContainer.style.display = 'none';
+                emptyMsg.style.display = 'block';
+                return;
+            }
+
+            emptyMsg.style.display = 'none';
+            resultContainer.style.display = 'block';
+
+            resultList.innerHTML = matched.map(rental => {
+                const rentalDate = new Date(rental.rentalDate);
+                const returnDate = new Date(rental.returnDate);
+                return `
+                    <div class="rental-item" style="background: white;">
+                        <div class="rental-info">
+                            <div class="rental-item-name">
+                                <span style="font-size: 20px; margin-right: 10px;">${rental.itemEmoji}</span>
+                                ${rental.itemName} (${rental.quantity}개)
+                            </div>
+                            <div class="rental-item-date">
+                                <strong>대여일:</strong> ${rentalDate.toLocaleDateString()} | <strong>반납예정일:</strong> ${returnDate.toLocaleDateString()}<br>
+                                ${rental.returned && rental.returnedDate ? `<strong>반납완료일:</strong> ${new Date(rental.returnedDate).toLocaleDateString()}` : ''}
+                            </div>
+                            <span class="rental-status ${rental.returned ? 'status-returned' : 'status-renting'}">
+                                ${rental.returned ? '반납완료' : '대여중'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        window.renderHistory = function() {
+            if (!isAdmin) return;
+
+            const historyDiv = document.getElementById('rentalHistory');
+            const emptyDiv = document.getElementById('emptyHistory');
+            if (!historyDiv) return;
+            
+            if (rentals.length === 0) {
+                historyDiv.style.display = 'none';
+                emptyDiv.style.display = 'block';
+                return;
+            }
+            
+            historyDiv.style.display = 'flex';
+            emptyDiv.style.display = 'none';
+            
+            historyDiv.innerHTML = rentals.map((rental, index) => {
+                const rentalDate = new Date(rental.rentalDate);
+                const returnDate = new Date(rental.returnDate);
+                
+                return `
+                    <div class="rental-item">
+                        <div class="rental-info">
+                            <div class="rental-item-name">
+                                <span style="font-size: 20px; margin-right: 10px;">${rental.itemEmoji}</span>
+                                ${rental.itemName} (${rental.quantity}개)
+                            </div>
+                            <div class="rental-item-date">
+                                <strong>대여자:</strong> ${rental.renterName} | <strong>학번:</strong> ${rental.renterStudentId} | <strong>연락처:</strong> ${rental.renterPhone}<br>
+                                <strong>기간:</strong> ${rentalDate.toLocaleDateString()} ~ ${returnDate.toLocaleDateString()}
+                            </div>
+                            <span class="rental-status ${rental.returned ? 'status-returned' : 'status-renting'}">
+                                ${rental.returned ? '반납완료' : '대여중'}
+                            </span>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            ${!rental.returned ? `
+                                <button class="btn btn-primary" style="width: 70px; padding: 8px;" onclick="openReturnModal(${index})">반납</button>
+                            ` : `
+                                <button class="btn btn-danger" style="width: 70px; padding: 8px; font-size: 13px;" onclick="deleteRentalRecord(${index})">삭제</button>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deleteRentalRecord(index) {
+            if (!isAdmin) return;
+            if (confirm('이 반납 완료된 이력을 삭제하시겠습니까?')) {
+                rentals.splice(index, 1);
+                saveData();
+                renderHistory();
+            }
+        }
+
+        function clearReturnedRentals() {
+            if (!isAdmin) return;
+            if (confirm('반납이 완료된 모든 이력을 일괄 삭제하시겠습니까? (대여 중인 내역은 유지됩니다)')) {
+                rentals = rentals.filter(r => !r.returned);
+                saveData();
+                renderHistory();
+            }
+        }
+        
+        function openReturnModal(index) {
+            if (!isAdmin) return;
+            currentReturnIndex = index;
+            const rental = rentals[index];
+            
+            document.getElementById('returnItemInfo').textContent = 
+                `${rental.itemEmoji} ${rental.itemName} - 대여자: ${rental.renterName} (${rental.renterStudentId})`;
+            document.getElementById('returnQuantity').value = rental.quantity;
+            document.getElementById('returnQuantity').max = rental.quantity;
+            
+            document.getElementById('returnModal').classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('returnModal').classList.remove('active');
+            currentReturnIndex = null;
+        }
+        
+        function submitReturn() {
+            if (!isAdmin || currentReturnIndex === null) return;
+            
+            const returnQuantity = parseInt(document.getElementById('returnQuantity').value);
+            const rental = rentals[currentReturnIndex];
+            const item = items.find(i => i.id === rental.itemId);
+            
+            if (item) {
+                item.renting = Math.max(0, item.renting - returnQuantity);
+            }
+            rental.returned = true;
+            rental.returnedDate = new Date().toISOString();
+            
+            saveData();
+            closeModal();
+            renderHistory();
+            renderDashboard();
+            
+            alert(`${rental.renterName}님의 ${rental.itemName} ${returnQuantity}개가 반납되었습니다.`);
+        }
+        
+        window.renderManageTab = function() {
+            if (!isAdmin) return;
+            
+            const managedItems = document.getElementById('managedItems');
+            if (!managedItems) return;
+            
+            managedItems.innerHTML = items.map(item => `
+                <div class="rental-item">
+                    <div class="rental-info">
+                        <div class="rental-item-name">${item.emoji} ${item.name}</div>
+                        <div class="rental-item-date">
+                            총 ${item.total}개 | 대여중 ${item.renting}개 | 사용가능 ${item.total - item.renting}개
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" style="width: auto; padding: 8px 15px;" onclick="deleteItem(${item.id})">삭제</button>
+                </div>
+            `).join('');
+        }
+        
+        function addNewItem() {
+            if (!isAdmin) {
+                alert('관리자만 물품을 추가할 수 있습니다');
+                return;
+            }
+            
+            const name = document.getElementById('newItemName').value.trim();
+            const emoji = document.getElementById('newItemEmoji').value.trim();
+            const quantity = parseInt(document.getElementById('newItemQuantity').value);
+            
+            if (!name || !emoji || quantity < 1) {
+                alert('모든 정보를 입력해주세요');
+                return;
+            }
+            
+            const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+            
+            items.push({
+                id: newId,
+                name: name,
+                emoji: emoji,
+                total: quantity,
+                renting: 0
+            });
+            
+            saveData();
+            
+            document.getElementById('newItemName').value = '';
+            document.getElementById('newItemEmoji').value = '📦';
+            document.getElementById('newItemQuantity').value = '5';
+            
+            alert(`${emoji} ${name}이(가) 추가되었습니다!`);
+            renderManageTab();
+            renderDashboard();
+            renderRentalForm();
+        }
+        
+        function deleteItem(id) {
+            if (!isAdmin) {
+                alert('관리자만 물품을 삭제할 수 있습니다');
+                return;
+            }
+            
+            if (confirm('이 물품을 삭제하시겠습니까?')) {
+                items = items.filter(item => item.id !== id);
+                saveData();
+                renderManageTab();
+                renderDashboard();
+                renderRentalForm();
+            }
+        }
+        
+        window.addEventListener('load', () => {
+            initializeData();
+            renderDashboard();
+
+            const syncNotice = document.getElementById('syncNotice');
+            if (syncNotice && window.__sharedStore && window.__sharedStore.configured()) {
+                syncNotice.style.display = 'none';
+            } else if (syncNotice) {
+                syncNotice.style.display = 'block';
+            }
+        });
+    
+        window.addEventListener('error', function(e) {
+            console.error('[물품대여시스템 오류]', e.error || e.message);
+        });
+    </script>
+</body>
+</html>
